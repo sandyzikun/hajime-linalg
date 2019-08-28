@@ -3,7 +3,6 @@ import cmath as cm
 class Constants(object):
     NUM_TYPE = [ int, float, complex ]
     ITER_TYPE = [ list, tuple ]
-    IDX_TYPE = [ slice, int ]
     class VectorType(object):
         ALL_TYPE = [ "c", "col", "r", "row" ]
         COL_TYPE = [ "c", "col" ]
@@ -21,6 +20,27 @@ def ismatrix(matrix):
             if type(matrix[i][j]) not in Constants.NUM_TYPE:
                 return False
     return True
+
+def index2range(idx, shp):
+    if idx == None:
+        start = 0
+        stop = shp
+        step = 1
+    elif type(idx) == int:
+        start = idx if idx >= 0 else shp - idx
+        stop = start + 1
+        step = 1
+    elif type(idx) == slice:
+        step = 1 if idx.step == None else idx.step
+        if step > 0:
+            start = 0 if idx.start == None else idx.start
+            stop = shp if idx.stop == None else idx.stop
+        elif step < 0:
+            start = shp - 1 if idx.start == None else idx.start
+            stop = -1 if idx.stop == None else idx.stop
+    else:
+        raise AssertionError
+    return range(start, stop, step)
 
 class Matrix(object):
 
@@ -58,63 +78,10 @@ class Matrix(object):
         return "Matrix[\n" + "\n".join([ (" " + " ".join([ (" " * (longest - len(str(self.data[i][j])))) + str(self.data[i][j]) for j in range(self.shape[1]) ])) for i in range(self.shape[0]) ]) + "\n]"
 
     def __getitem__(self, idx):
-        if type(idx) == tuple and len(idx) == 2 and type(idx[0]) in Constants.IDX_TYPE and type(idx[1]) in Constants.IDX_TYPE:
-            if type(idx[0]) == int:
-                start1, stop1, step1 = idx[0], idx[0] + 1, 1
-            elif type(idx[0]) == slice:
-                step1 = 1 if idx[0].step == None else idx[0].step
-                if step1 > 0:
-                    start1 = 0 if idx[0].start == None else idx[0].start
-                    stop1 = self.shape[0] if idx[0].stop == None else idx[0].stop
-                elif step1 < 0:
-                    start1 = self.shape[0] - 1 if idx[0].start == None else idx[0].start
-                    stop1 = -1 if idx[0].stop == None else idx[0].stop
-            if type(idx[1]) == int:
-                start2, stop2, step2 = idx[1], idx[1] + 1, 1
-            elif type(idx[1]) == slice:
-                step2 = 1 if idx[1].step == None else idx[1].step
-                if step2 > 0:
-                    start2 = 0 if idx[1].start == None else idx[1].start
-                    stop2 = self.shape[1] if idx[1].stop == None else idx[1].stop
-                elif step2 < 0:
-                    start2 = self.shape[1] - 1 if idx[1].start == None else idx[1].start
-                    stop2 = -1 if idx[1].stop == None else idx[1].stop
-        elif type(idx) in Constants.IDX_TYPE:
-            if type(idx) == int:
-                start1, stop1, step1 = idx, idx + 1, 1
-            elif type(idx) == slice:
-                step1 = 1 if idx.step == None else idx.step
-                if step1 > 0:
-                    start1 = 0 if idx.start == None else idx.start
-                    stop1 = self.shape[0] if idx.stop == None else idx.stop
-                elif step1 < 0:
-                    start1 = self.shape[0] - 1 if idx.start == None else idx.start
-                    stop1 = -1 if idx.stop == None else idx.stop
-            start2, stop2, step2 = 0, self.shape[1], 1
+        if type(idx) == tuple and len(idx) == 2:
+            return Matrix([ [ self.data[i][j] for j in index2range(idx[1], self.shape[1]) ] for i in index2range(idx[0], self.shape[0]) ])
         else:
-            raise AssertionError
-        """ TODO: FIXME!
-        if type(idx) == tuple and len(idx) == 2 and type(idx[0]) in Constants.IDX_TYPE and type(idx[1]) in Constants.IDX_TYPE:
-            if type(idx[0]) == slice:
-                rng1 = range((idx[0].start if idx[0].start >= 0 else self.shape[0] - idx[0].start), (idx[0].stop if idx[0].stop >= 0 else self.shape[0] - idx[0].stop), idx[0].step)
-            elif type(idx[0]) == int:
-                rng1 = range((idx[0] if idx[0] >= 0 else self.shape[0] - idx[0]), (idx[0] + 1 if idx[0] >= 0 else self.shape[0] - idx[0] + 1), 1)
-            if type(idx[1]) == slice:
-                rng2 = range((idx[1].start if idx[1].start >= 0 else self.shape[1] - idx[1].start), (idx[1].stop if idx[1].stop >= 0 else self.shape[1] - idx[1].stop), idx[1].step)
-            elif type(idx[1]) == int:
-                rng2 = range((idx[1] if idx[1] >= 0 else self.shape[1] - idx[1]), (idx[1] + 1 if idx[1] >= 0 else self.shape[1] - idx[1] + 1), 1)
-        elif type(idx) in Constants.IDX_TYPE:
-            if type(idx) == slice:
-                rng1 = range((idx.start if idx.start >= 0 else self.shape[0] - idx.start), (idx.stop if idx.stop >= 0 else self.shape[0] - idx.stop), idx.step)
-                rng2 = range(self.shape[1])
-            elif type(idx) == int:
-                rng1 = range((idx if idx >= 0 else self.shape[0] - idx), (idx + 1 if idx >= 0 else self.shape[0] - idx + 1), 1)
-                rng2 = range(self.shape[1])
-        else:
-            raise AssertionError
-        return Matrix([ [ self.data[i][j] for j in rng2 ] for i in rng1 ])
-        """
-        return Matrix([ [ self.data[i][j] for j in range(start2, stop2, step2) ] for i in range(start1, stop1, step1) ])
+            return Matrix([ [ self.data[i][j] for j in index2range(None, self.shape[1]) ] for i in index2range(idx, self.shape[0]) ])
 
     def __len__(self):
         return self.shape[0] * self.shape[1]
@@ -176,6 +143,22 @@ class Matrix(object):
     def transposition(self):
         return Matrix([ [ self.__data[j][i] for j in range(len(self.__data)) ] for i in range(len(self.__data[0])) ])
 
+    def __near_zeros(self, idx, drct):
+        assert self.issquare and type(drct) == str and drct.lower() in [ "r", "l" ]
+        shp = self.shape[0]
+        if drct.lower() == "r":
+            for i in range(idx + 1):
+                for j in range(idx + 1, shp):
+                    if self.data[i][j] != 0:
+                        return False
+            return True
+        elif drct.lower() == "l":
+            for i in range(idx + 1, shp):
+                for j in range(idx + 1):
+                    if self.data[i][j] != 0:
+                        return False
+            return True
+
     @property
     def determinant(self):
         assert self.issquare
@@ -186,12 +169,19 @@ class Matrix(object):
             return self.data[0][0] * self.data[1][1] - self.data[0][1] * self.data[1][0]
         elif shp == 3:
             return self.data[0][0] * self.data[1][1] * self.data[2][2] \
-                 + self.data[0][1] * self.data[1][2] * self.data[2][0] \
-                 + self.data[0][2] * self.data[1][0] * self.data[2][1] \
-                 - self.data[0][2] * self.data[1][1] * self.data[2][0] \
-                 - self.data[0][1] * self.data[1][0] * self.data[2][2] \
-                 - self.data[0][0] * self.data[1][2] * self.data[2][1]
+                + self.data[0][1] * self.data[1][2] * self.data[2][0] \
+                + self.data[0][2] * self.data[1][0] * self.data[2][1] \
+                - self.data[0][2] * self.data[1][1] * self.data[2][0] \
+                - self.data[0][1] * self.data[1][0] * self.data[2][2] \
+                - self.data[0][0] * self.data[1][2] * self.data[2][1]
         else:
+            # TODO: FIXME! MDZZ
+            """
+            for idx in range(shp):
+                if self.__near_zeros(idx, "r") or self.__near_zeros(idx, "l"):
+                    print(self[ : idx + 1 , : idx + 1 ], self[ idx + 1 : , idx + 1 : ], sep = "")
+                    return self[ : idx + 1 , : idx + 1 ].determinant * self[ idx + 1 : , idx + 1 : ].determinant
+            """
             return sum([ (self.data[i][0] * self.alg_cofactor(i, 0)) for i in range(self.shape[0]) ])
 
     def comatrix(self, i, j):
@@ -356,6 +346,16 @@ class Examples(object):
     E = Matrix([ [ 1 , 1 , (-1) , 2 ], [ (-1) , (-1) , (-4) , 1 ], [ 2 , 4 , (-6), 1 ], [ 1 , 2 , 2 , 2 ] ])
     F = Matrix([ [ 3 , 1 , 1 , 1 ], [ 1 , 3 , 1 , 1 ], [ 1 , 1 , 3 , 1 ], [ 1 , 1 , 1 , 3 ] ])
     G = Matrix([ [ 0 , 0 , 0 , 0 , 0 , 0 ], [ 1 , 0 , 0 , 0 , 0 , 0 ], [ 0 , 1 , 0 , 0 , 0 , 0 ], [ 0 , 0 , 1 , 0 , 0 , 0 ], [ 0 , 0 , 0 , 1 , 0 , 0 ], [ 0 , 0 , 0 , 0 , 1 , 0 ] ])
+    H = Matrix([
+        [ 1 , 2 , 3 , 0 , 0 , 0 , 0 , 0 ],
+        [ 4 , 5 , 6 , 0 , 0 , 0 , 0 , 0 ],
+        [ 7 , 8 , 9 , 0 , 10, 20, 30, 40],
+        [ 0 , 0 , 0 , 1 , 2 , 0 , 0 , 0 ],
+        [ 0 , 0 , 0 , 3 , 4 , 0 , 0 , 0 ],
+        [ 0 , 60, 0 , 0 , 0 , 4 , 5 , 6 ],
+        [ 0 , 0 , 0 , 0 , 0 , 7 , 8 , 9 ],
+        [ 0 , 0 , 0 , 0 , 0 , 10, 11, 12]
+    ])
 
 if __name__ == "__main__":
-    pass
+    print(Examples.H.det)
