@@ -1,11 +1,12 @@
-Hajime
-======
+# Hajime 线性代数模块
+
+## 名称由来 (Name Origin)
 
 名称取自PSP游戏[《超级弹丸论破2/超级枪弹辩驳2:再见绝望学园》](https://zh.moegirl.org/超级弹丸论破2:再见绝望学园)的主人公[日向创](https://zh.moegirl.org/日向创)的名字, Hinata-Hajime, 其名Hajime意为"创造未来"。
 
 (后续补充Usage)
 
-以下是Hajime老哥在该游戏最后一章 "Class Trail" 中的发言:
+以下是Hajime在该游戏最后一章的**Class Trail**中的发言:
 
 > There won't just be hope...
 > There will probably be a lot of despair too...

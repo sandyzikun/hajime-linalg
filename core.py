@@ -1,3 +1,4 @@
+import os
 import cmath as cm
 
 class Constants(object):
@@ -143,26 +144,18 @@ class Matrix(object):
     def transposition(self):
         return Matrix([ [ self.__data[j][i] for j in range(len(self.__data)) ] for i in range(len(self.__data[0])) ])
 
-    def __near_zeros(self, idx, drct):
-        assert self.issquare and type(drct) == str and drct.lower() in [ "r", "l" ]
-        shp = self.shape[0]
-        if drct.lower() == "r":
-            for i in range(idx + 1):
-                for j in range(idx + 1, shp):
-                    if self.data[i][j] != 0:
-                        return False
-            return True
-        elif drct.lower() == "l":
-            for i in range(idx + 1, shp):
-                for j in range(idx + 1):
-                    if self.data[i][j] != 0:
-                        return False
-            return True
-
     @property
     def determinant(self):
         assert self.issquare
         shp = self.shape[0]
+        if shp > 1:
+            for idx in range(shp - 1):
+                if self.near_zeros(idx, "r")[0]:
+                    return self.near_zeros(idx, "r")[1].determinant * self.near_zeros(idx, "r")[2].determinant
+                elif self.near_zeros(idx, "l")[0]:
+                    return self.near_zeros(idx, "l")[1].determinant * self.near_zeros(idx, "l")[2].determinant
+                else:
+                    continue
         if shp == 1:
             return self.data[0][0]
         elif shp == 2:
@@ -175,13 +168,6 @@ class Matrix(object):
                 - self.data[0][1] * self.data[1][0] * self.data[2][2] \
                 - self.data[0][0] * self.data[1][2] * self.data[2][1]
         else:
-            # TODO: FIXME! MDZZ
-            """
-            for idx in range(shp):
-                if self.__near_zeros(idx, "r") or self.__near_zeros(idx, "l"):
-                    print(self[ : idx + 1 , : idx + 1 ], self[ idx + 1 : , idx + 1 : ], sep = "")
-                    return self[ : idx + 1 , : idx + 1 ].determinant * self[ idx + 1 : , idx + 1 : ].determinant
-            """
             return sum([ (self.data[i][0] * self.alg_cofactor(i, 0)) for i in range(self.shape[0]) ])
 
     def comatrix(self, i, j):
@@ -309,6 +295,29 @@ class Matrix(object):
             rnk += 1 if newmat.data[idx][idx] else 0
         return rnk
 
+    def near_zeros(self, idx, typ):
+        assert self.issquare and type(typ) == str and typ.lower() in [ "r", "l" ] # "r" <=> "right", "l" <=> "left"
+        shp = self.shape[0]
+        for i in range(idx + 1, shp):
+            for j in range(idx + 1):
+                if self.data[ i if typ.lower() == "r" else j ][ j if typ.lower() == "r" else i ] != 0:
+                    return False,
+        return True, self[ : idx + 1 , : idx + 1 ], self[ idx + 1 : , idx + 1 : ]
+
+    @property
+    def fast_det(self):
+        assert self.issquare
+        shp = self.shape[0]
+        if shp > 1:
+            for idx in range(shp - 1):
+                if self.near_zeros(idx, "r")[0]:
+                    return self.near_zeros(idx, "r")[1].fast_det * self.near_zeros(idx, "r")[2].fast_det
+                elif self.near_zeros(idx, "l")[0]:
+                    return self.near_zeros(idx, "l")[1].fast_det * self.near_zeros(idx, "l")[2].fast_det
+                else:
+                    continue
+        return self.determinant
+
     T = transposition
     det = determinant
     R = rank
@@ -346,16 +355,7 @@ class Examples(object):
     E = Matrix([ [ 1 , 1 , (-1) , 2 ], [ (-1) , (-1) , (-4) , 1 ], [ 2 , 4 , (-6), 1 ], [ 1 , 2 , 2 , 2 ] ])
     F = Matrix([ [ 3 , 1 , 1 , 1 ], [ 1 , 3 , 1 , 1 ], [ 1 , 1 , 3 , 1 ], [ 1 , 1 , 1 , 3 ] ])
     G = Matrix([ [ 0 , 0 , 0 , 0 , 0 , 0 ], [ 1 , 0 , 0 , 0 , 0 , 0 ], [ 0 , 1 , 0 , 0 , 0 , 0 ], [ 0 , 0 , 1 , 0 , 0 , 0 ], [ 0 , 0 , 0 , 1 , 0 , 0 ], [ 0 , 0 , 0 , 0 , 1 , 0 ] ])
-    H = Matrix([
-        [ 1 , 2 , 3 , 0 , 0 , 0 , 0 , 0 ],
-        [ 4 , 5 , 6 , 0 , 0 , 0 , 0 , 0 ],
-        [ 7 , 8 , 9 , 0 , 10, 20, 30, 40],
-        [ 0 , 0 , 0 , 1 , 2 , 0 , 0 , 0 ],
-        [ 0 , 0 , 0 , 3 , 4 , 0 , 0 , 0 ],
-        [ 0 , 60, 0 , 0 , 0 , 4 , 5 , 6 ],
-        [ 0 , 0 , 0 , 0 , 0 , 7 , 8 , 9 ],
-        [ 0 , 0 , 0 , 0 , 0 , 10, 11, 12]
-    ])
+    H = Matrix([ [ 1 , 2 , 3 , 0 , 0 , 0 , 0 , 10], [ 4 , 5 , 6 , 0 , 0 , 0 , 0 , 0 ], [ 7 , 8 , 9 , 0 , 50, 0 , 0 , 0 ], [ 0 , 0 , 0 , 1 , 2 , 0 , 0 , 0 ], [ 0 , 0 , 0 , 3 , 4 , 0 , 0 , 0 ], [ 0 , 0 , 0 , 0 , 0 , 4 , 5 , 0 ], [ 0 , 0 , 0 , 60, 0 , 7 , 8 , 0 ], [ 90, 0 , 0 , 0 , 0 , 0 , 0 , 12] ])
 
 if __name__ == "__main__":
-    print(Examples.H.det)
+    pass
