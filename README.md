@@ -4,7 +4,7 @@
 
 名称取自PSP游戏[《超级弹丸论破2/超级枪弹辩驳2:再见绝望学园》](https://zh.moegirl.org/超级弹丸论破2:再见绝望学园)的主人公[日向创](https://zh.moegirl.org/日向创)的名字, Hinata-Hajime, 其名Hajime意为"创造未来"。
 
-(后续补充Usage)
+~~(后续补充Usage)~~ 不补充了，不维护了，现在都已经`Archive`了
 
 以下是Hajime在该游戏最后一章的**Class Trail**中的发言:
 
